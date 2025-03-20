@@ -1,12 +1,106 @@
 import flet as ft
+from request import agregar_usuario, eliminar_usuario, obtener_usuarios, obtener_usuario_por_id
+from formulario import get_formulario
 
-data = [
-    {"id": 1, "nombre": "Ejemplo 1", "edad": 25, "correo": "ejemplo1@test.com", "telefono": "123456789"},
-    {"id": 2, "nombre": "Ejemplo 2", "edad": 30, "correo": "ejemplo2@test.com", "telefono": "987654321"},
-    {"id": 3, "nombre": "Ejemplo 3", "edad": 22, "correo": "ejemplo3@test.com", "telefono": "456789123"},
-]
+def get_crud(page, mostrar_formulario_callback):
+    # Definir la tabla de usuarios
+    table = ft.DataTable(
+        columns=[
+            ft.DataColumn(ft.Text("ID", weight="bold", color=ft.colors.WHITE)),
+            ft.DataColumn(ft.Text("Nombre P.", weight="bold", color=ft.colors.WHITE)),
+            ft.DataColumn(ft.Text("Nombre H.", weight="bold", color=ft.colors.WHITE)),
+            ft.DataColumn(ft.Text("Correo", weight="bold", color=ft.colors.WHITE)),
+            ft.DataColumn(ft.Text("Acciones", weight="bold", color=ft.colors.WHITE)),
+        ],
+        rows=[]
+    )
 
-def get_crud():
+    # Campo de entrada para buscar
+    search_field = ft.TextField(
+        hint_text="Buscar por ID",
+        bgcolor="white",
+        border_radius=5,
+        height=40,
+    )
+
+    def cargar_usuarios():
+        """Carga todos los usuarios en la tabla."""
+        data = obtener_usuarios()
+        actualizar_tabla(data)
+
+    def actualizar_tabla(data):
+        """Actualiza la tabla con los datos proporcionados."""
+        table.rows = [
+            ft.DataRow(
+                cells=[
+                    ft.DataCell(ft.Text(str(item.get("_id", "")), color=ft.colors.WHITE)),
+                    ft.DataCell(ft.Text(item.get("username", ""), color=ft.colors.WHITE)),
+                    ft.DataCell(ft.Text(item.get("sonName", ""), color=ft.colors.WHITE)),
+                    ft.DataCell(ft.Text(item.get("email", ""), color=ft.colors.WHITE)),
+                    ft.DataCell(
+                        ft.Row(
+                            spacing=5,
+                            controls=[
+                                ft.IconButton(
+                                    icon=ft.icons.EDIT,
+                                    icon_color="#88ddfb",
+                                    on_click=lambda e, id=item["_id"]: editar_usuario(id),  # Llamar a la función de edición
+                                ),
+                                ft.IconButton(
+                                    icon=ft.icons.DELETE,
+                                    icon_color="red",
+                                    on_click=lambda e, id=item["_id"]: print(f"El id es: {id}"),
+                                ),
+                                ft.IconButton(  
+                                    icon=ft.icons.QR_CODE_SCANNER,
+                                    icon_color="white",
+                                ),
+                            ]
+                        )
+                    ),
+                ]
+            )
+            for item in data
+        ]
+        page.update()  # Se actualiza la página para reflejar cambios
+
+    def eliminar_y_actualizar(id_usuario):
+        """Elimina un usuario y actualiza la tabla."""
+        if eliminar_usuario(id_usuario):
+            cargar_usuarios()
+    
+    def editar_usuario(id_usuario):
+        usuario = obtener_usuario_por_id(id_usuario)
+        print(f"Usuario obtenido: {usuario}")  # Verifica que los datos sean correctos
+        if usuario:
+            mostrar_formulario_callback(usuario)
+        else:
+            page.snack_bar = ft.SnackBar(ft.Text("Usuario no encontrado"), bgcolor="red")
+            page.snack_bar.open = True
+            page.update()
+
+
+
+    def buscar_y_actualizar(e):
+        """Busca un usuario por ID y actualiza la tabla."""
+        id_usuario = search_field.value.strip()  # Obtener ID ingresado
+        print(f"ID ingresado: {id_usuario}")  # Imprimir el valor ingresado
+
+        if not id_usuario:
+            return  # No hacer nada si el campo está vacío
+
+        usuario = obtener_usuario_por_id(id_usuario)
+        if usuario:
+            actualizar_tabla([usuario])  # Mostrar solo el usuario encontrado
+        else:
+            page.snack_bar = ft.SnackBar(ft.Text("Usuario no encontrado"), bgcolor="red")
+            page.snack_bar.open = True
+            page.update()
+
+
+    # Cargar los usuarios al inicio
+    cargar_usuarios()
+
     return ft.Container(
         expand=True,
         padding=20,
@@ -31,72 +125,32 @@ def get_crud():
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 spacing=10,
                                 controls=[
-                                    ft.TextField(
-                                        hint_text="Buscar por ID",
-                                        bgcolor="white",
-                                        border_radius=5,
-                                        height=40,
-                                    ),
+                                    search_field,  # Campo de búsqueda por ID
                                     ft.IconButton(
                                         icon=ft.icons.SEARCH,
                                         icon_color="white",
                                         bgcolor="#88ddfb",
+                                        on_click=buscar_y_actualizar,  # Llama a la función de búsqueda
+                                    ),
+                                    ft.IconButton(
+                                        icon=ft.icons.ADD,
+                                        icon_color="white",
+                                        bgcolor="#88ddfb",
+                                        on_click=mostrar_formulario_callback,  # Usa el callback para mostrar el formulario
                                     ),
                                 ],
                             ),
                         ],
                     ),
                 ),
-
-                # Contenedor para la tabla (centrada y expandida)
                 ft.Container(
-                    expand=True,  # Hace que la tabla se expanda
-                    alignment=ft.alignment.top_center,  # Centrar tabla en la parte superior
+                    expand=True,  
+                    alignment=ft.alignment.top_center,  
                     bgcolor="#484a66",
                     border_radius=10,
                     padding=15,
-                    content=ft.DataTable(
-                        columns=[
-                            ft.DataColumn(ft.Text("ID", weight="bold", color=ft.colors.WHITE)),
-                            ft.DataColumn(ft.Text("Nombre", weight="bold", color=ft.colors.WHITE)),
-                            ft.DataColumn(ft.Text("Edad", weight="bold", color=ft.colors.WHITE)),
-                            ft.DataColumn(ft.Text("Correo", weight="bold", color=ft.colors.WHITE)),
-                            ft.DataColumn(ft.Text("Teléfono", weight="bold", color=ft.colors.WHITE)),
-                            ft.DataColumn(ft.Text("Acciones", weight="bold", color=ft.colors.WHITE)),
-                        ],
-                        rows=[
-                            ft.DataRow(
-                                cells=[
-                                    ft.DataCell(ft.Text(str(item["id"]), color=ft.colors.WHITE)),
-                                    ft.DataCell(ft.Text(item["nombre"], color=ft.colors.WHITE)),
-                                    ft.DataCell(ft.Text(str(item["edad"]), color=ft.colors.WHITE)),
-                                    ft.DataCell(ft.Text(item["correo"], color=ft.colors.WHITE)),
-                                    ft.DataCell(ft.Text(item["telefono"], color=ft.colors.WHITE)),
-                                    ft.DataCell(
-                                        ft.Row(
-                                            spacing=5,
-                                            controls=[
-                                                ft.IconButton(
-                                                    icon=ft.icons.EDIT,
-                                                    icon_color="#88ddfb",
-                                                ),
-                                                ft.IconButton(
-                                                    icon=ft.icons.DELETE,
-                                                    icon_color="red",
-                                                ),
-                                                ft.IconButton(  # Botón QR dentro de la tabla
-                                                    icon=ft.icons.QR_CODE_SCANNER,
-                                                    icon_color="white",
-                                                ),
-                                            ]
-                                        )
-                                    ),
-                                ]
-                            )
-                            for item in data  
-                        ],
-                    ),
-                )
+                    content=table,  
+                ),
             ]
         ),
     )

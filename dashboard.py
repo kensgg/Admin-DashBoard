@@ -20,7 +20,7 @@ def get_dashboard():
                                 controls=[
                                     ft.Row(
                                         controls=[
-                                            ft.Icon(ft.Icons.FLUTTER_DASH, size=50, color=ft.colors.WHITE),
+                                            ft.Icon(ft.Icons.BAR_CHART, size=25, color=ft.colors.WHITE),
                                             ft.Text("Gráfica 1", size=20, color=ft.colors.WHITE),
                                         ]
                                     )
@@ -37,7 +37,7 @@ def get_dashboard():
                                 controls=[
                                     ft.Row(
                                         controls=[
-                                            ft.Icon(ft.Icons.FLUTTER_DASH, size=50, color=ft.colors.WHITE),
+                                            ft.Icon(ft.Icons.MULTILINE_CHART, size=25, color=ft.colors.WHITE),
                                             ft.Text("Gráfica 2", size=20, color=ft.colors.WHITE),
                                         ]
                                     )
@@ -47,14 +47,13 @@ def get_dashboard():
                     ],
                 ),
                 
-                # Sección de estadísticas (se expande automáticamente)
                 ft.Container(
                     bgcolor="#23243d",
                     padding=15,
                     border_radius=10,
-                    expand=True,  # Se expande para ocupar el espacio restante
+                    expand=True, 
                     content=ft.Column(
-                        expand=True,  # Hace que la columna interna se expanda
+                        expand=True, 
                         spacing=10,
                         controls=[
                             ft.Row(
